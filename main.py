@@ -7,13 +7,16 @@
 #
 
 import requests
-import pandas as pd
 import datetime
 import smtplib
 import configparser
 import schedule
 import time
+import pandas as pd
 
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_colwidth', -1)
 
 # vars
 config = configparser.ConfigParser()
@@ -30,11 +33,6 @@ confluence_user = config['CONFLUENCE']['user']
 confluence_password = config['CONFLUENCE']['pass']
 
 
-pd.set_option('display.max_columns', None)  # or 1000
-pd.set_option('display.max_rows', None)  # or 1000
-pd.set_option('display.max_colwidth', -1)  # or 199
-
-
 def get_dataframe():
     r = requests.get(confluence_connection_string,
                      auth=(confluence_user, confluence_password))
@@ -43,21 +41,16 @@ def get_dataframe():
 
 
 def today_celebration(birthday):
-
-    #   Добавляем к дате текущий год и вычисляем разницу
+    # Add to the date current year and find the difference.
     now = datetime.datetime.now()
     year = now.strftime("%Y")
     bd = str(birthday) + "." + year
     dr = datetime.datetime.strptime(bd, "%d.%m.%Y")
     now_str = now.strftime("%d.%m.%Y")
     now_date = datetime.datetime.strptime(now_str, "%d.%m.%Y")
-    # print(now_date)
-    # print(dr)
     t1 = dr - now_date
     print t1.days
     if t1.days >= -7 and t1.days <= 1:
-        #print t1.days
-        #print("Happy Birthday!")
         return 1, str(birthday)
 
 
@@ -84,25 +77,25 @@ def main():
     for i in df[u"№"]:
         try:
             print i
-#           print type(df[u"День рождения"][i])
             hb, dr = today_celebration(df[u"День рождения"][i])
-#           print hb, dr
             if hb == 1:
-                for j in (df[u"№"]) and df[u'Комната'] != 'уволен':
-                    if j == i:
-                        pass
-                    else:
-                        message = (df[u"ФИ"][i] + u' празднует день рождения ' + dr)
-                        target = df[u"e-mail"][j]
-                        send_email(message, target)
+                for j in (df[u"№"]):
+                    if df[u'Комната'][j] != u'уволен':
+                        if j == i:
+                            pass
+                        else:
+                            message = (df[u"ФИ"][i] + u' празднует день рождения ' + dr)
+                            target = df[u"e-mail"][j]
+                            send_email(message, target)
+        #except Exception as e: print(e)
         except:
-            print("ERROR")
             pass
 
 
 if __name__ == "__main__":
-    # schedule to start daily at exact time
+    #Schedule to start daily at exact time
     schedule.every(1).to(5).days.at(sending_time).do(main())
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        time.sleep(3600)
+#       main()
